@@ -3,6 +3,21 @@
 % Name: Nicholas Luis
 % PSU ID: NML5604 (930841391)
 
+% Goals:
+%   - Get silhouette of object
+%       > adjust threshold value until it is good (alternatively, can do
+%         object tracking of the statue in between images)
+%   - Determine if a voxel contains our target object
+%       > get the center point of each voxel
+%       > Get the voxel center points in the 2D image coordinates
+%       > Check if the pixel at the coordinate is white in the thresholded
+%         image. If so, add an occupancy score to that voxel
+%       > repeat
+
+%       > object tracking of the statue between images? (alternatively,
+%         find a silouette threshold value that only extracts the statue)
+
+
 clear; clc; close all;
 
 %% Setup
@@ -10,9 +25,9 @@ clear; clc; close all;
 % Use these variables to enable/disable different parts of the script.
 
 loadImages           = true;  
-displayVolumeCorners = false;
-computeVisualHull    = false;
-displayIsoSurface    = false;
+displayVolumeCorners = true;
+computeVisualHull    = true;
+displayIsoSurface    = true;
 
 
 %% Task B silhouette threshold
@@ -24,14 +39,14 @@ silhouetteThreshold = 150;% Enter Value Here
 
 % It should be as small as possible, but still contain the whole region of
 % interest.
-bbox = [1 1 1; 100 100 200]; %[minX minY minZ; maxX maxY maxZ]  
+bbox = [-1 -1 -2; 4 4 4]; %[minX minY minZ; maxX maxY maxZ]  
 volumeX = 10; % Select # voxels in x
 volumeY = 10; % Select # voxels in y
 volumeZ = 20; % Select # voxels in z
-volumeThreshold = 18; % What's a good value here?
+volumeThreshold = 10; % What's a good value here?
 
 % The volume threshold is used to identify the voxels that have no
-% intersection at all. For n images, the volume threshold has to be a
+% intersection at all. For n (18) images, the volume threshold has to be a
 % number less or equal to than n. Discuss in your report the significance
 % of this number.
 
@@ -95,6 +110,7 @@ if displayVolumeCorners
         plot(pcorners(1,:),pcorners(2,:),'g*');
         drawnow;
         pause(0.1);
+
     end
 end
 %% Task D Visual Hull
@@ -108,10 +124,57 @@ if computeVisualHull
     %   - Be careful with the order of coordinates. The point is stored as
     %     (x,y,z), but matrix element access in Matlab is mat(row,col).
 
-    % -----------------  ENTER YOUR CODE HERE
+    % -----------------  ENTER YOUR CODE HERE  ----------------- %
     
+    % calculates center point of each voxel in volume coordinates
+
+        % Gets the corners of the voxels 
+        xCorners = linspace(bbox(1,1),bbox(2,1),volumeX+1);
+        yCorners = linspace(bbox(1,2),bbox(2,2),volumeY+1);
+        zCorners = linspace(bbox(1,3),bbox(2,3),volumeZ+1);
+
+        % gets the center points of each voxel
+        xCenters = NaN(length(xCorners)-1,1); % pre-allocating for speed
+        yCenters = NaN(length(yCorners)-1,1); 
+        zCenters = NaN(length(zCorners)-1,1);
+        for indx = 1 : volumeX
+            xCenters(indx) = mean(xCorners(indx):xCorners(indx+1));
+        end
+        for indx = 1: volumeY
+            yCenters(indx) = mean(yCorners(indx):yCorners(indx+1));
+        end
+        for indx = 1: volumeZ
+            zCenters(indx) = mean(zCorners(indx):zCorners(indx+1));
+        end
+
+        % creates a matrix of all the center points. Each cell corresponds
+        % to which voxel it is. And inside each cell is a 3x1 vector that
+        % describe its volume coordinates
+        centers = cell(volumeX, volumeY, volumeZ); % preallocate for speed
+        for i = 1:volumeX
+            for j = 1:volumeY
+                for k = 1:volumeZ
+                    centers{i,j,k} = cell(3,1);   % each d{i,j,k} is a 3×1 cell
+                end
+            end
+        end
+
+    % Converts the center points of each voxel from volume coords to world coordinates 
+
+    % Converts the center points of each voxel from world coords to pixel coords
+
+    % Checks if the pixel is white at the given voxel pixel coordinates
+    for i = 1 : volumeX
+        for j = 1 : volumeY
+            for k = 1: volumeZ 
 
 
+                % 
+                
+            end
+        end
+    end
+    
 
     %---------------------------------------------------------------
 
