@@ -3,6 +3,8 @@
 % Name: Nicholas Luis
 % PSU ID: NML5604 (930841391)
 
+% Notes: See April 29th lecture
+
 % Goals:
 %   - Get silhouette of object
 %       > adjust threshold value until it is good (alternatively, can do
@@ -33,7 +35,7 @@ displayIsoSurface    = true;
 %% Task B silhouette threshold
 
 % This should be a suitable value between 0 and 255
-silhouetteThreshold = 150;% Enter Value Here
+silhouetteThreshold = 135;% Enter Value Here
 
 %% Task C define bounding box
 
@@ -114,7 +116,6 @@ if displayVolumeCorners
     end
 end
 %% Task D Visual Hull
-
 if computeVisualHull
     % Define volume. This is used to store the number of observations for each voxel.
     volume = zeros(volumeX,volumeY,volumeZ);
@@ -147,23 +148,29 @@ if computeVisualHull
             zCenters(indx) = mean(zCorners(indx):zCorners(indx+1));
         end
 
-        % creates a matrix of all the center points. Each cell corresponds
-        % to which voxel it is. And inside each cell is a 3x1 vector that
-        % describe its volume coordinates
-        centers = cell(volumeX, volumeY, volumeZ); % preallocate for speed
+        % creates a N*4 matrix to store the 3 coordinates & a column of 1's
+        centers = NaN(volumeX*volumeY*volumeZ + 1, 4); % preallocate for speed
+        centers(1,:) = [0 0 0 1];
+        indx = 2;
         for i = 1:volumeX
             for j = 1:volumeY
                 for k = 1:volumeZ
-                    centers{i,j,k} = cell(3,1);   % each d{i,j,k} is a 3×1 cell
+                    centers(indx, :) = [1, xCenters(i), yCenters(j), zCenters(k)];
+                    indx = indx + 1;
                 end
             end
         end
 
-    % Converts the center points of each voxel from volume-coords to world coordinates 
+    % Converts the center points of each voxel from volume coords to pixel coords
+    pcenters = Ps{n}*T*centers'; % Convert to image coordinates
+    pcenters = pcenters./repmat(pcenters(3,:),3,1); % Scaling so that third element is 1
 
-    % Conv
+    % Checks if the pixel is white at the given voxel pixel coordinates
+    figure(3);
+    imshow(sils{n});
+    draw 
+    plot(pcenters(1,:),pcenters(2,:),'g*');
 
-    % iterates through each of the voxels and makes some checks
     for i = 1 : volumeX
         for j = 1 : volumeY
             for k = 1: volumeZ 

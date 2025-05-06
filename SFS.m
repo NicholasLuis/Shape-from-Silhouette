@@ -3,6 +3,8 @@
 % Name: Nicholas Luis
 % PSU ID: NML5604 (930841391)
 
+% Notes: See April 29th lecture
+
 % Goals:
 %   - Get silhouette of object
 %       > adjust threshold value until it is good (alternatively, can do
@@ -33,7 +35,7 @@ displayIsoSurface    = true;
 %% Task B silhouette threshold
 
 % This should be a suitable value between 0 and 255
-silhouetteThreshold = 150;% Enter Value Here
+silhouetteThreshold = 135;% Enter Value Here
 
 %% Task C define bounding box
 
@@ -114,69 +116,48 @@ if displayVolumeCorners
     end
 end
 %% Task D Visual Hull
-
 if computeVisualHull
     % Define volume. This is used to store the number of observations for each voxel.
     volume = zeros(volumeX,volumeY,volumeZ);
     
-    % Visual hull computation    
-    %   - For each image add one to the voxel if projection is within silhouette region.
-    %   - Be careful with the order of coordinates. The point is stored as
-    %     (x,y,z), but matrix element access in Matlab is mat(row,col).
-
-    % -----------------  ENTER YOUR CODE HERE  ----------------- %
+    % calculates center point of each voxel in world coords
+    xCorners = linspace( bbox(1,1), bbox(2,1), volumeX+1 );
+    yCorners = linspace( bbox(1,2), bbox(2,2), volumeY+1 );
+    zCorners = linspace( bbox(1,3), bbox(2,3), volumeZ+1 );
     
-    % calculates center point of each voxel in volume coordinates
+    xCenters = ( xCorners(1:end-1) + xCorners(2:end) )/2;
+    yCenters = ( yCorners(1:end-1) + yCorners(2:end) )/2;
+    zCenters = ( zCorners(1:end-1) + zCorners(2:end) )/2;
+        
 
-        % Gets the corners of the voxels 
-        xCorners = linspace(bbox(1,1),bbox(2,1),volumeX+1);
-        yCorners = linspace(bbox(1,2),bbox(2,2),volumeY+1);
-        zCorners = linspace(bbox(1,3),bbox(2,3),volumeZ+1);
-
-        % gets the center points of each voxel
-        xCenters = NaN(length(xCorners)-1,1); % pre-allocating for speed
-        yCenters = NaN(length(yCorners)-1,1); 
-        zCenters = NaN(length(zCorners)-1,1);
-        for indx = 1 : volumeX
-            xCenters(indx) = mean(xCorners(indx):xCorners(indx+1));
-        end
-        for indx = 1: volumeY
-            yCenters(indx) = mean(yCorners(indx):yCorners(indx+1));
-        end
-        for indx = 1: volumeZ
-            zCenters(indx) = mean(zCorners(indx):zCorners(indx+1));
-        end
-
-        % creates a matrix of all the center points. Each cell corresponds
-        % to which voxel it is. And inside each cell is a 3x1 vector that
-        % describe its volume coordinates
-        centers = cell(volumeX, volumeY, volumeZ); % preallocate for speed
-        for i = 1:volumeX
-            for j = 1:volumeY
-                for k = 1:volumeZ
-                    centers{i,j,k} = cell(3,1);   % each d{i,j,k} is a 3×1 cell
-                end
-            end
-        end
-
-    % Converts the center points of each voxel from volume coords to world coordinates 
-
-    % Converts the center points of each voxel from world coords to pixel coords
-
-    % Checks if the pixel is white at the given voxel pixel coordinates
-    for i = 1 : volumeX
-        for j = 1 : volumeY
-            for k = 1: volumeZ 
-
-
-                % 
-                
+    % creates a N*4 matrix to store the 3 coordinates & a column of 1's
+    centers = NaN(volumeX*volumeY*volumeZ + 1, 4); % preallocate for speed
+    centers(1,:) = [0 0 0 1];
+    indx = 2;
+    for i = 1:volumeX
+        for j = 1:volumeY
+            for k = 1:volumeZ
+                centers(indx, :) = [xCenters(i), yCenters(j), zCenters(k), 1];
+                indx = indx + 1;
             end
         end
     end
-    
 
-    %---------------------------------------------------------------
+    % Plots the centers of the voxels on the images
+    for n = 1:numCameras
+        
+        % Converts the center points of each voxel from volume coords to pixel coords
+        pcenters = Ps{n}*centers'; % Convert to image coordinates
+        pcenters = pcenters./repmat(pcenters(3,:),3,1); % Scaling so that third element is 1
+        
+        figure(3); 
+        imshow(sils{n}); 
+        hold on;
+        plot( pcenters(1,:), pcenters(2,:), 'g*');
+        hold off;
+        drawnow;
+        pause(0.5);
+    end
 
 end
 
@@ -190,7 +171,7 @@ end
 
 if displayIsoSurface
     % display result
-    figure(3);
+    figure(4);
     clf;
     grid on;
     xlabel('x');
