@@ -157,6 +157,22 @@ if computeVisualHull
         hold off;
         drawnow;
         pause(0.5);
+
+        pcenters = round(pcenters); % Round to the nearest pixel
+        % Checks if the voxel center lands on a pixel that is a white or black
+        voxelCounter = zeros(length(pCenters), 1);
+        for i = 1 : length(pcenters)
+            image = sils{n};
+            u = pcenters(2,i); 
+            v = pcenters(1,i);
+
+            if (image(u,v) == 1)
+
+            end
+
+        end
+
+        % Checks to see which voxel that index belongs to
     end
 
 end
