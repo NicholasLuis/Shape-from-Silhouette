@@ -41,12 +41,12 @@ silhouetteThreshold = 135;% Enter Value Here
 
 % It should be as small as possible, but still contain the whole region of
 % interest.
-bbox = [-0.25 -2.25 -1.75; 2.25 2.75 1.75]; %[minX minY minZ; maxX maxY maxZ]  
+bbox = [-0.75 -2.25 -1.75; 2.25 3 1.75]; %[minX minY minZ; maxX maxY maxZ]  
 % Creating evenly spaced voxels
-volumeX = 50; % Select # voxels in x
-volumeY = 150; % Select # voxels in y
+volumeX = 10; % Select # voxels in x
+volumeY = 0; % Select # voxels in y (high number for good resolution)
 volumeZ = round( volumeX*((bbox(2,3)-bbox(1,3)) / (bbox(2,1)-bbox(1,1))) ); % % Create evenly distributed voxels in xz plane
-volumeThreshold = 15; % What's a good value here?
+volumeThreshold = 10; % What's a good value here?
 
 % The volume threshold is used to identify the voxels that have no
 % intersection at all. For n (18) images, the volume threshold has to be a
@@ -155,7 +155,7 @@ if computeVisualHull
         figure(3); 
         imshow(sils{n}); 
         hold on;
-        plot(pcenters(1,:), pcenters(2,:), 'g.');
+        plot(pcenters(1,:), pcenters(2,:), 'g*');
         title(sprintf('Image %d',n));
         hold off;
         drawnow;
