@@ -1,24 +1,22 @@
 %% Metadata
-% SPCV Spring 24 - Project 1
+% SPCV Spring 25 - Final Project
 % Name: Nicholas Luis
 % PSU ID: NML5604 (930841391)
 
-% Notes: See April 29th lecture
-
 % Goals:
 %   - Get silhouette of object
-%       > adjust threshold value until it is good (alternatively, can do
-%         object tracking of the statue in between images)
+%       > adjust threshold value until no part of the statue is missing 
+%         (alternatively can do object tracking and remove everything else)
+%   - Create boundary box filled with voxels
+%       > determine the min/max values of the coordinates for the box
+%         (done via trial and error) 
+%       > define the number of voxels in each direction
 %   - Determine if a voxel contains our target object
 %       > get the center point of each voxel
-%       > Get the voxel center points in the 2D image coordinates
+%       > Transform the voxel center points into 2D image coordinates
 %       > Check if the pixel at the coordinate is white in the thresholded
 %         image. If so, add an occupancy score to that voxel
-%       > repeat
-
-%       > object tracking of the statue between images? (alternatively,
-%         find a silouette threshold value that only extracts the statue)
-
+%       > repeat for each of the 18 images
 
 clear; clc; close all;
 
@@ -27,15 +25,15 @@ clear; clc; close all;
 % Use these variables to enable/disable different parts of the script.
 
 loadImages           = true;  
-displayVolumeCorners = false;
+displayVolumeCorners = true;
 computeVisualHull    = true;
-displayIsoSurface    = false;
+displayIsoSurface    = true;
 
 
 %% Task B silhouette threshold
 
 % This should be a suitable value between 0 and 255
-silhouetteThreshold = 135;% Enter Value Here
+silhouetteThreshold = 100;% Enter Value Here
 
 %% Task C define bounding box
 
@@ -43,10 +41,10 @@ silhouetteThreshold = 135;% Enter Value Here
 % interest.
 bbox = [-0.25 -2.25 -1.75; 2.25 2.75 1.75]; %[minX minY minZ; maxX maxY maxZ]  
 % Creating evenly spaced voxels
-volumeX = 50; % Select # voxels in x
-volumeY = 150; % Select # voxels in y
+volumeX = 5; % Select # voxels in x
+volumeY = 15; % Select # voxels in y
 volumeZ = round( volumeX*((bbox(2,3)-bbox(1,3)) / (bbox(2,1)-bbox(1,1))) ); % % Create evenly distributed voxels in xz plane
-volumeThreshold = 15; % What's a good value here?
+volumeThreshold = 16; 
 
 % The volume threshold is used to identify the voxels that have no
 % intersection at all. For n (18) images, the volume threshold has to be a
@@ -78,6 +76,7 @@ if loadImages
         imshow(double(rgb2gray(ims{n}))/255.*sils{n});
         title(sprintf('Image %d',n));
         drawnow;
+        pause(0);
     end
 end
 
@@ -115,7 +114,7 @@ if displayVolumeCorners
         plot(pcorners(1,:),pcorners(2,:),'g*');
         title(sprintf('Image %d',n));
         drawnow;
-        pause(0.1);
+        pause(0);
 
     end
 end
@@ -135,11 +134,13 @@ if computeVisualHull
 
     % creates a N*4 matrix to store the 3 coordinates & a column of 1's
     centers = NaN(volumeX*volumeY*volumeZ, 4); % preallocate for speed
+    pixel2voxel = NaN(volumeX*volumeY*volumeZ, 3); % Maps the coordinates of each centerpoint to a corresponding voxel
     indx = 1;
     for i = 1:volumeX
         for j = 1:volumeY
             for k = 1:volumeZ
                 centers(indx, :) = [xCenters(i), yCenters(j), zCenters(k), 1];
+                pixel2voxel(indx, :) = [i, j, k];
                 indx = indx + 1;
             end
         end
@@ -151,6 +152,21 @@ if computeVisualHull
         % Converts the center points of each voxel from volume coords to pixel coords
         pcenters = Ps{n}*centers'; % Convert to image coordinates
         pcenters = pcenters./repmat(pcenters(3,:),3,1); % Scaling so that third element is 1
+        pcenters = round(pcenters); % Round to the nearest pixel
+
+        % Ensures that the transformed coordinates are within the bounds of the image
+        [height, width] = size(sils{n});
+        for i = 1 : length(pcenters)
+            % Checking the u values (columns)
+            if ((pcenters(1,i) <= 0) || (pcenters(1,i) > width))
+                pcenters(1,i) = NaN;
+            end
+
+            % Checking the v values (rows)
+            if ((pcenters(2,i) <= 0) || (pcenters(2,i) > height))
+                pcenters(2,i) = NaN;
+            end
+        end
 
         figure(3); 
         imshow(sils{n}); 
@@ -159,26 +175,33 @@ if computeVisualHull
         title(sprintf('Image %d',n));
         hold off;
         drawnow;
-        pause(0.5);
+        pause(0);
 
-        pcenters = round(pcenters); % Round to the nearest pixel
         % Checks if the voxel center lands on a pixel that is a white or black
-%         voxelCounter = zeros(length(pcenters), 1);
-%         for i = 1 : length(pcenters)
-%             image = sils{n};
-%             u = pcenters(2,i); 
-%             v = pcenters(1,i);
-% 
-%             if (image(u,v) == 1)
-% 
-%             end
-% 
-%         end
+        voxelCounter = zeros(length(pcenters), 1);
+        for i = 1 : length(pcenters)
+            image = sils{n};
+            u = pcenters(1,i); 
+            v = pcenters(2,i);
+            
+            if isfinite(u) && isfinite(v)
+               
+                % if the voxel center is placed on a white pixel, add it to the counter
+                if (image(v,u) == 1)
+                    xIndex = pixel2voxel(i,1);
+                    yIndex = pixel2voxel(i,2);
+                    zIndex = pixel2voxel(i,3);
+    
+                    volume(xIndex, yIndex, zIndex) = 1 + volume(xIndex, yIndex, zIndex);
+                end
+            
+            end
 
-        % Checks to see which voxel that index belongs to
-    end
+        end % loops through each of the voxels
 
-end
+    end % loops through each of the 18 images
+
+end % entire visual hull code
 
 %% Display the isosurface
 
