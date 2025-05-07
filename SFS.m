@@ -1,7 +1,8 @@
 %% Metadata
 % SPCV Spring 25 - Final Project
 % Name: Nicholas Luis
-% PSU ID: NML5604 (930841391)
+% PSU ID: NML5604
+% I have completed this with integrity
 
 % Goals:
 %   - Get silhouette of object
@@ -41,9 +42,9 @@ silhouetteThreshold = 100;% Enter Value Here
 % interest.
 bbox = [-0.25 -2.25 -1.75; 2.25 2.75 1.75]; %[minX minY minZ; maxX maxY maxZ]  
 % Creating evenly spaced voxels
-volumeX = 5; % Select # voxels in x
-volumeY = 15; % Select # voxels in y
-volumeZ = round( volumeX*((bbox(2,3)-bbox(1,3)) / (bbox(2,1)-bbox(1,1))) ); % % Create evenly distributed voxels in xz plane
+volumeX = 200; % Select # voxels in x
+volumeY = 600; % Select # voxels in y
+volumeZ = round( volumeX*((bbox(2,3)-bbox(1,3)) / (bbox(2,1)-bbox(1,1))) ); % Create evenly distributed voxels in the xz plane
 volumeThreshold = 16; 
 
 % The volume threshold is used to identify the voxels that have no
